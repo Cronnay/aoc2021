@@ -9,12 +9,10 @@ fn main() {
     match part_var {
         Ok(var) => {
             let contents = std::fs::read_to_string(file).expect("Could not load file");
-            let mut all_inputs: Vec<i32> = Vec::new();
-            for line in contents.lines() {
-                if let Ok(parsed) = line.parse::<i32>() {
-                    all_inputs.push(parsed);
-                }
-            }
+            let all_inputs = contents
+                .split("\n")
+                .map(|row| row.parse::<i32>().unwrap())
+                .collect::<Vec<i32>>();
             let resp = match var.as_str() {
                 "part1" => part_one(&all_inputs),
                 "part2" => part_two(&all_inputs),
@@ -28,9 +26,9 @@ fn main() {
 
 fn part_one(inputs: &Vec<i32>) -> i32 {
     let mut sum = 0;
-    for n in 0..inputs.len() {
-        if is_number_prime(n as i16) {
-            sum += n as i32 * inputs.get(n).expect("Input does not exist");
+    for (index, row) in inputs.iter().enumerate() {
+        if is_number_prime(*row as i16) {
+            sum += index as i32 * row;
         }
     }
     sum
@@ -38,12 +36,12 @@ fn part_one(inputs: &Vec<i32>) -> i32 {
 
 fn part_two(inputs: &Vec<i32>) -> i32 {
     let mut sum = 0;
-    for n in 0..inputs.len() {
-        if !is_number_prime(n as i16) {
-            if n % 2 == 0 {
-                sum += inputs.get(n).expect("Input does not exist");
+    for (index, row) in inputs.iter().enumerate() {
+        if !is_number_prime(*row as i16) {
+            if index % 2 == 0 {
+                sum += inputs.get(index).expect("Input does not exist");
             } else {
-                sum -= inputs.get(n).expect("Input does not exist");
+                sum -= inputs.get(index).expect("Input does not exist");
             }
         }
     }
@@ -51,21 +49,19 @@ fn part_two(inputs: &Vec<i32>) -> i32 {
 }
 
 fn is_number_prime(number: i16) -> bool {
-    if number == 1 {
-        return true;
-    }
+    recursive_number_prime(number, 2)
+}
 
-    if number % 2 == 0 {
+fn recursive_number_prime(n: i16, i: i16) -> bool {
+    if n <= 2 {
+        return n == 2;
+    } else if n % i == 0 {
         return false;
+    } else if i * i > n {
+        return true;
+    } else {
+        recursive_number_prime(n, i + 1)
     }
-
-    for n in 3..number {
-        if number % n == 0 {
-            return false;
-        }
-    }
-
-    true
 }
 
 #[test]
@@ -80,37 +76,18 @@ fn test_is_number_prime() {
     assert_eq!(is_number_prime(83), true);
     assert_eq!(is_number_prime(84), false);
     assert_eq!(is_number_prime(89), true);
-    assert_eq!(is_number_prime(2), false);
+    assert_eq!(is_number_prime(2), true);
     assert_eq!(is_number_prime(0), false);
 }
 
 #[test]
-fn test_part_one_should_return_105() {
-    let inputs = vec![1337, 25, 66, 10, 79, 10];
-    assert_eq!(part_one(&inputs), 105)
-}
-
-
-#[test]
-fn test_part_one_should_return_0() {
-    let inputs = vec![0];
-    assert_eq!(part_one(&inputs), 0)
+fn test_part_one_should_return_2421() {
+    let inputs = vec![0, 3, 4, 42, 106, 107, 267, 269];
+    assert_eq!(part_one(&inputs), 2421)
 }
 
 #[test]
-fn test_part_one_should_return_15() {
-    let inputs = vec![0,15,33];
-    assert_eq!(part_one(&inputs), 15)
+fn test_part_two_should_return_335() {
+    let inputs = vec![0, 3, 4, 42, 106, 107, 267, 269];
+    assert_eq!(part_two(&inputs), 335)
 }
-
-#[test]
-fn test_part_two_should_return_1324() {
-    let inputs = vec![1337, 25, 66, 10, 79, 10];
-    assert_eq!(part_two(&inputs), 1482)
-}
-
-#[test]
-fn test_part_two_should_return_1668() {
-    let inputs = vec![1337, 25, 66, 10, 79, 10, 66, 9, 123, 3];
-    assert_eq!(part_two(&inputs), 1668)
-} 
