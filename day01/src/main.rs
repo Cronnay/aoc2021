@@ -25,69 +25,24 @@ fn main() {
 }
 
 fn part_one(inputs: &Vec<i32>) -> i32 {
-    let mut sum = 0;
-    for (index, row) in inputs.iter().enumerate() {
-        if is_number_prime(*row as i16) {
-            sum += index as i32 * row;
+    let mut increased = 0;
+    inputs.iter().reduce(|a, b| {
+        if b > a {
+            increased += 1;
         }
-    }
-    sum
+        b
+    });
+    increased
 }
 
 fn part_two(inputs: &Vec<i32>) -> i32 {
-    let mut sum = 0;
-    for (index, row) in inputs.iter().enumerate() {
-        if !is_number_prime(*row as i16) {
-            if index % 2 == 0 {
-                sum += inputs.get(index).expect("Input does not exist");
-            } else {
-                sum -= inputs.get(index).expect("Input does not exist");
-            }
+    let mut increased = 0;
+    for n in 0..inputs.len()-3 {
+        let first_sum: i32 = inputs[n..=n+2].iter().sum();
+        let second_sum: i32 = inputs[n+1..=n+3].iter().sum();
+        if second_sum > first_sum {
+            increased += 1;
         }
     }
-    sum
-}
-
-fn is_number_prime(number: i16) -> bool {
-    recursive_number_prime(number, 2)
-}
-
-fn recursive_number_prime(n: i16, i: i16) -> bool {
-    if n <= 2 {
-        return n == 2;
-    } else if n % i == 0 {
-        return false;
-    } else if i * i > n {
-        return true;
-    } else {
-        recursive_number_prime(n, i + 1)
-    }
-}
-
-#[test]
-fn test_is_number_prime() {
-    assert_eq!(is_number_prime(3), true);
-    assert_eq!(is_number_prime(5), true);
-    assert_eq!(is_number_prime(7), true);
-    assert_eq!(is_number_prime(8), false);
-    assert_eq!(is_number_prime(9), false);
-    assert_eq!(is_number_prime(11), true);
-    assert_eq!(is_number_prime(12), false);
-    assert_eq!(is_number_prime(83), true);
-    assert_eq!(is_number_prime(84), false);
-    assert_eq!(is_number_prime(89), true);
-    assert_eq!(is_number_prime(2), true);
-    assert_eq!(is_number_prime(0), false);
-}
-
-#[test]
-fn test_part_one_should_return_2421() {
-    let inputs = vec![0, 3, 4, 42, 106, 107, 267, 269];
-    assert_eq!(part_one(&inputs), 2421)
-}
-
-#[test]
-fn test_part_two_should_return_335() {
-    let inputs = vec![0, 3, 4, 42, 106, 107, 267, 269];
-    assert_eq!(part_two(&inputs), 335)
+    increased
 }
