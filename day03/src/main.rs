@@ -52,17 +52,17 @@ fn part_two(contents: String) -> u64 {
             if z > o {
                 oxygen = oxygen
                     .into_iter()
-                    .filter(|&binary| binary.chars().collect::<Vec<char>>().get(n).unwrap() == &'0')
+                    .filter(|&binary| filter_out(binary, '0', n))
                     .collect();
             } else if o > z {
                 oxygen = oxygen
                     .into_iter()
-                    .filter(|&binary| binary.chars().collect::<Vec<char>>().get(n).unwrap() == &'1')
+                    .filter(|&binary| filter_out(binary, '1', n))
                     .collect();
             } else if o == z {
                 oxygen = oxygen
                     .into_iter()
-                    .filter(|&binary| binary.chars().collect::<Vec<char>>().get(n).unwrap() == &'1')
+                    .filter(|&binary| filter_out(binary, '1', n))
                     .collect();
             }
         }
@@ -71,17 +71,17 @@ fn part_two(contents: String) -> u64 {
             if z > o {
                 co2 = co2
                     .into_iter()
-                    .filter(|&binary| binary.chars().collect::<Vec<char>>().get(n).unwrap() == &'1')
+                    .filter(|&binary| filter_out(binary, '1', n))
                     .collect();
             } else if o > z {
                 co2 = co2
                     .into_iter()
-                    .filter(|&binary| binary.chars().collect::<Vec<char>>().get(n).unwrap() == &'0')
+                    .filter(|&binary| filter_out(binary, '0', n))
                     .collect();
             } else if o == z {
                 co2 = co2
                     .into_iter()
-                    .filter(|&binary| binary.chars().collect::<Vec<char>>().get(n).unwrap() == &'0')
+                    .filter(|&binary| filter_out(binary, '0', n))
                     .collect();
             }
         }
@@ -105,6 +105,10 @@ fn get_ratings_of_bits(binaries: &Vec<&str>, index: usize) -> (i32, i32) {
         }
     });
     (zeros, ones)
+}
+
+fn filter_out(binary: &str, character: char, n: usize) -> bool {
+    binary.chars().collect::<Vec<char>>().get(n).unwrap() == &character
 }
 
 #[test]
