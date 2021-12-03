@@ -1,7 +1,9 @@
-use std::{env, panic};
+use crossbeam::thread;
+use std::{env, panic, time::Instant};
 
 fn main() {
     let mut file: String = String::new();
+    let now = Instant::now();
     for args in env::args() {
         file = args;
     }
@@ -18,6 +20,8 @@ fn main() {
         }
         Err(err) => panic!("Err: {}", err),
     }
+    let duration = now.elapsed();
+    println!("Elapsed: {:?}", duration);
 }
 
 fn part_one(contents: String) -> u64 {
@@ -42,55 +46,47 @@ fn part_one(contents: String) -> u64 {
 
 fn part_two(contents: String) -> u64 {
     let splitted_contents = contents.split("\n").collect::<Vec<&str>>();
-    let mut oxygen = splitted_contents.clone();
-    let mut co2 = splitted_contents.clone();
-    let mut n = 0;
-
-    while oxygen.len() > 1 || co2.len() > 1 {
-        if oxygen.len() > 1 {
-            let (z, o) = get_ratings_of_bits(&oxygen, n);
-            if z > o {
-                oxygen = oxygen
-                    .into_iter()
-                    .filter(|&binary| filter_out(binary, '0', n))
-                    .collect();
-            } else if o > z {
-                oxygen = oxygen
-                    .into_iter()
-                    .filter(|&binary| filter_out(binary, '1', n))
-                    .collect();
-            } else if o == z {
-                oxygen = oxygen
-                    .into_iter()
-                    .filter(|&binary| filter_out(binary, '1', n))
-                    .collect();
+    thread::scope(|s| {
+        let oxygen_thread = s.spawn(|_| {
+            let mut oxygen = splitted_contents.clone();
+            let mut n = 0;
+            while oxygen.len() > 1 {
+                if oxygen.len() > 1 {
+                    let (z, o) = get_ratings_of_bits(&oxygen, n);
+                    if z > o {
+                        oxygen.retain(create_predicate('0', n));
+                    } else if o > z {
+                        oxygen.retain(create_predicate('1', n)); 
+                    } else if o == z {
+                        oxygen.retain(create_predicate('1', n));
+                    }
+                }
+                n += 1;
             }
-        }
-        if co2.len() > 1 {
-            let (z, o) = get_ratings_of_bits(&co2, n);
-            if z > o {
-                co2 = co2
-                    .into_iter()
-                    .filter(|&binary| filter_out(binary, '1', n))
-                    .collect();
-            } else if o > z {
-                co2 = co2
-                    .into_iter()
-                    .filter(|&binary| filter_out(binary, '0', n))
-                    .collect();
-            } else if o == z {
-                co2 = co2
-                    .into_iter()
-                    .filter(|&binary| filter_out(binary, '0', n))
-                    .collect();
+            oxygen.get(0).unwrap().clone()
+        });
+        let co2_thread = s.spawn(|_| {
+            let mut co2 = splitted_contents.clone();
+            let mut n = 0;
+            while co2.len() > 1 {
+                if co2.len() > 1 {
+                    let (z, o) = get_ratings_of_bits(&co2, n);
+                    if z > o {
+                        co2.retain(create_predicate('1', n));
+                    } else if o > z {
+                        co2.retain(create_predicate('0', n));
+                    } else if o == z {
+                        co2.retain(create_predicate('0', n));
+                    }
+                }
+                n += 1;
             }
-        }
-        n += 1;
-    }
-    let oxygen_decimal = isize::from_str_radix(oxygen.get(0).unwrap(), 2).unwrap();
-    let co2_decimal = isize::from_str_radix(co2.get(0).unwrap(), 2).unwrap();
-    println!("Oxy: {}, co2: {}", oxygen_decimal, co2_decimal);
-    (oxygen_decimal * co2_decimal).try_into().unwrap()
+            co2.get(0).unwrap().clone()
+        });
+        let oxygen_decimal = isize::from_str_radix(oxygen_thread.join().unwrap(), 2).unwrap();
+        let co2_decimal = isize::from_str_radix(co2_thread.join().unwrap(), 2).unwrap();
+        (oxygen_decimal * co2_decimal).try_into().unwrap()
+    }).unwrap()
 }
 
 /// Returns a tuple which shows how many of each bit is represtened. (zeros, ones)
@@ -107,10 +103,11 @@ fn get_ratings_of_bits(binaries: &Vec<&str>, index: usize) -> (i32, i32) {
     (zeros, ones)
 }
 
-fn filter_out(binary: &str, character: char, n: usize) -> bool {
-    binary.chars().collect::<Vec<char>>().get(n).unwrap() == &character
+fn create_predicate(character: char, n: usize) -> impl FnMut(&&str) -> bool {
+    move |x: &&str| {
+        return x.chars().collect::<Vec<char>>().get(n).unwrap() == &character;
+    }
 }
-
 #[test]
 fn test_get_ratings_from_bits() {
     let insert: Vec<&str> = vec![
