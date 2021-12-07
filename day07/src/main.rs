@@ -42,11 +42,37 @@ fn part_one(inputs: &Vec<i32>) -> i32 {
 }
 
 fn part_two(inputs: &Vec<i32>) -> i32 {
-    0
+    let max_value = inputs.iter().max().unwrap();
+    let mut lowest_fuel = i32::MAX;
+
+    for i in 0..=*max_value {
+        let mut cost_of_position = 0;
+        for j in 0..inputs.len() {
+            let diff = (inputs[j] - i).abs();
+            let m = {
+                let mut k = 0;
+                for n in 1..=diff {
+                    k += n;
+                }
+                k
+            };
+            cost_of_position += m;
+        }
+        if lowest_fuel > cost_of_position {
+            lowest_fuel = cost_of_position;
+        }
+    }
+    lowest_fuel
 }
 
 #[test]
 fn test_part_one() {
     let input = vec![16,1,2,0,4,2,7,1,2,14];
     assert_eq!(part_one(&input), 37);
+}
+
+#[test]
+fn test_part_two() {
+    let input = vec![16,1,2,0,4,2,7,1,2,14];
+    assert_eq!(part_two(&input), 168);
 }
